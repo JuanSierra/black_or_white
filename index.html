@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script type="text/javascript">
+		var imgData;
+		var bits = 2;
+		var ctx;
+		var can;
+		var labels = ['Original','1 bit', '2 bits', '4 bits', '8 bits'];
+		var currentLabel = 1;
+
+		$(function () {
+		    var img = new Image();
+		    img.src = 'RGB_24bits_palette_sample_image.jpg';
+		    can = document.getElementById('base');
+		    ctx = can.getContext('2d');
+		    img.onload = function () {
+		    	can.width = this.width;
+		    	can.height = this.height;
+		        ctx.drawImage(this, 0, 0, this.width, this.height);
+		        imgData = ctx.getImageData(0, 0, this.width, this.height);
+		        imgData = new Uint8ClampedArray(imgData.data);
+		    };
+		    $('#convertBtn').click(takeOver);
+		});
+
+		var takeOver = function () {
+		    var avg;
+		    var rate = 255 / bits;
+		    var tempData = new Uint8ClampedArray(imgData);
+			
+			if(bits <= 16){
+				for (var i = 0; i < tempData.length; i += 4) {
+					avg = Math.floor((tempData[i] + tempData[i + 1] + tempData[i + 2]) / 3);
+					avg = Math.floor(avg / rate) * Math.floor(255 / (bits - 1));
+
+					tempData[i] = avg;
+					tempData[i + 1] = avg;
+					tempData[i + 2] = avg;
+					tempData[i + 3] = 255;
+				}
+				replaceData(tempData);
+
+				bits *= 2;
+			}else{
+				currentLabel = 0;
+				replaceData(imgData);
+				
+				bits = 2;
+			}
+
+			$('#label').text(labels[currentLabel++]);
+		}
+
+		var replaceData = function(data){
+			var current = ctx.getImageData(0, 0, can.width, can.height);
+
+			current.data.set(data);
+			ctx.putImageData(current, 0, 0);
+		}
+
+	</script>
+</head>
+<body>
+	<h2>Grey Scale Transformation</h2>
+	<canvas id="base" width="200" height="200"></canvas>
+	<p id="label">Original</p>
+	<input id="convertBtn" type="button" value="convert"></input>
+</body>
+</html>
